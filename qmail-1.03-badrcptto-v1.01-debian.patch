@@ -1,0 +1,58 @@
+--- qmail-1.03.orig/qmail-smtpd.c	Fri Mar  2 00:14:19 2007
++++ qmail-1.03/qmail-smtpd.c	Fri Mar  2 00:21:10 2007
+@@ -56,6 +56,7 @@
+ void err_size() { out("552 sorry, that message size exceeds my databytes limit (#5.3.4)\r\n"); }
+ void err_bmf() { out("553 sorry, your envelope sender is in my badmailfrom list (#5.7.1)\r\n"); }
+ void err_bmt() { out("553 sorry, your envelope sender is in my badmailto list (#5.7.1)\r\n"); }
++void err_brt() { out("553 sorry, this recipient is in my badrecipientto list (#5.7.1)\r\n"); }
+ void err_nogateway() { out("553 sorry, that domain isn't in my list of allowed rcpthosts (#5.7.1)\r\n"); }
+ void err_unimpl() { out("502 unimplemented (#5.5.1)\r\n"); }
+ void err_syntax() { out("555 syntax error (#5.5.4)\r\n"); }
+@@ -115,6 +116,9 @@
+ int bmtok = 0;
+ stralloc bmt = {0};
+ struct constmap mapbmt;
++int brtok = 0;
++stralloc brt = {0};
++struct constmap mapbrt;
+ 
+ void setup()
+ {
+@@ -134,6 +138,11 @@
+   if (bmfok == -1) die_control();
+   if (bmfok)
+     if (!constmap_init(&mapbmf,bmf.s,bmf.len,0)) die_nomem();
++
++  brtok = control_readfile(&brt,"control/badrcptto",0);
++  if (brtok == -1) die_control();
++  if (brtok)
++    if (!constmap_init(&mapbrt,brt.s,brt.len,0)) die_nomem();
+  
+   bmtok = control_readfile(&bmt,"control/badmailto",0);
+   if (bmtok == -1) die_control();
+@@ -242,6 +251,17 @@
+   return 0;
+ }
+ 
++int brtcheck()
++{
++  int j;
++  if (!brtok) return 0;
++  if (constmap(&mapbrt,addr.s,addr.len - 1)) return 1;
++  j = byte_rchr(addr.s,addr.len,'@');
++  if (j < addr.len)
++    if (constmap(&mapbrt,addr.s + j,addr.len - j - 1)) return 1;
++  return 0;
++}
++
+ int addrallowed()
+ {
+   int r;
+@@ -369,6 +389,7 @@
+   }
+   else
+     if (!addrallowed()) { err_nogateway(); return; }
++  if (!env_get("RELAYCLIENT") && brtcheck()) { err_brt(); return; }
+   if (!stralloc_cats(&rcptto,"T")) die_nomem();
+   if (!stralloc_cats(&rcptto,addr.s)) die_nomem();
+   if (!stralloc_0(&rcptto)) die_nomem();
