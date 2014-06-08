@@ -1,0 +1,13 @@
+* Debian versions of qmail patches
+
+Debian provides the qmail-1.03 source with some patches already applied.
+Thus, some other patches won't work.
+This site provides slightly modified versions of some popular patches
+that work with Debian's qmail sources.
+
+- [[qmail-1.03-badrcptto-v1.01-debian.patch]]
+  (Variation of the [[http://patch.be/qmail/badrcptto.html][badrcptto patch]])
+- [[qmail-1.03-realrcptto-2006.12.10-debian.patch]]
+  (Variation of the [[http://code.dogmap.org/qmail/][qmail-realrcptto patch]])
+- [[qmail-1.03-easy-way-1.0-debian.patch]]
+  (Variation of the [[http://www.interazioni.it/opensource/chkusr/][chkusr easy way patch]])
